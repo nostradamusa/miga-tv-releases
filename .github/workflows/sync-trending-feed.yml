@@ -1,0 +1,30 @@
+name: Sync MIGA TV Commercial Trending & Dual-Ratings Feed
+
+on:
+  schedule:
+    # Runs automatically every 6 hours on GitHub's free cloud runners ($0/month)
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+
+jobs:
+  sync-feed:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Generate live trending-feed.json (Rotten Tomatoes + IMDb)
+        run: node commercial_hub/backend/sync_trending_and_ratings.mjs
+
+      - name: Upload trending-feed.json to Release v1.0.0
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload v1.0.0 commercial_hub/releases/feed/trending-feed.json --clobber
